@@ -1,4 +1,4 @@
-# Copyright 2017 Eficent Business and IT Consulting Services S.L.
+# Copyright 2017-2020 ForgeFlow, S.L. (https://www.forgeflow.com)
 # License LGPL-3.0 or later (http://www.gnu.org/licenses/lgpl-3.0).
 
 from odoo import fields
@@ -15,6 +15,7 @@ class TestStockRequestAnalytic(test_stock_request.TestStockRequest):
         self.analytic2 = self.analytic_model.create(
             {"name": "Pizza", "company_id": self.company_2.id}
         )
+        self.analytic3 = self.analytic_model.create({"name": "Hamburger"})
         self.demand_loc = self.env["stock.location"].create(
             {
                 "name": "demand_loc",
@@ -43,12 +44,11 @@ class TestStockRequestAnalytic(test_stock_request.TestStockRequest):
                 "procure_method": "make_to_stock",
                 "warehouse_id": self.warehouse.id,
                 "company_id": self.main_company.id,
-                "propagate": "False",
             }
         )
         self.pizza.route_ids = [(6, 0, self.demand_route.ids)]
 
-    def prepare_order_request_analytic(self, aa, company):
+    def prepare_order_request_analytic(self, analytic, company):
         expected_date = fields.Datetime.now()
         vals = {
             "company_id": company.id,
@@ -63,13 +63,53 @@ class TestStockRequestAnalytic(test_stock_request.TestStockRequest):
                         "product_id": self.pizza.id,
                         "product_uom_id": self.pizza.uom_id.id,
                         "product_uom_qty": 5.0,
-                        "analytic_account_id": aa.id,
+                        "analytic_account_id": analytic.id,
                         "company_id": company.id,
                         "warehouse_id": self.warehouse.id,
                         "location_id": self.demand_loc.id,
                         "expected_date": expected_date,
                     },
                 )
+            ],
+        }
+        return vals
+
+    def prepare_order_request_multi_analytic(self, analytic1, analytic2, company):
+        expected_date = fields.Datetime.now()
+        vals = {
+            "company_id": company.id,
+            "warehouse_id": self.warehouse.id,
+            "location_id": self.demand_loc.id,
+            "expected_date": expected_date,
+            "stock_request_ids": [
+                (
+                    0,
+                    0,
+                    {
+                        "product_id": self.pizza.id,
+                        "product_uom_id": self.pizza.uom_id.id,
+                        "product_uom_qty": 5.0,
+                        "analytic_account_id": analytic1.id,
+                        "company_id": company.id,
+                        "warehouse_id": self.warehouse.id,
+                        "location_id": self.demand_loc.id,
+                        "expected_date": expected_date,
+                    },
+                ),
+                (
+                    0,
+                    0,
+                    {
+                        "product_id": self.pizza.id,
+                        "product_uom_id": self.pizza.uom_id.id,
+                        "product_uom_qty": 5.0,
+                        "analytic_account_id": analytic2.id,
+                        "company_id": company.id,
+                        "warehouse_id": self.warehouse.id,
+                        "location_id": self.demand_loc.id,
+                        "expected_date": expected_date,
+                    },
+                ),
             ],
         }
         return vals
@@ -83,6 +123,16 @@ class TestStockRequestAnalytic(test_stock_request.TestStockRequest):
         self.assertEqual(order.analytic_count, 1)
         action = order.action_view_analytic()
         self.assertTrue(action["res_id"], self.analytic.id)
+        action2 = self.analytic.action_view_stock_request()
+        self.assertTrue(action2["res_id"], order.id)
+
+    def test_stock_multi_analytic(self):
+        vals = self.prepare_order_request_multi_analytic(
+            self.analytic, self.analytic3, self.main_company
+        )
+        order = self.env["stock.request.order"].create(vals)
+        order.action_confirm()
+        self.assertEqual(order.analytic_count, 2)
 
     def test_company(self):
         with self.assertRaises(ValidationError):

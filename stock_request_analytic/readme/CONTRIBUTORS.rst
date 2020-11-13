@@ -1,2 +1,3 @@
-* Aaron Henriquez <ahenriquez@eficent.com>
-* Lois Rilo <lois.rilo@eficent.com>
+* Aaron Henriquez <ahenriquez@forgeflow.com>
+* Lois Rilo <lois.rilo@forgeflow.com>
+* Pimolnat Suntian <pimolnats@ecosoft.co.th>

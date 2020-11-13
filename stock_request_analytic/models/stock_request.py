@@ -1,4 +1,4 @@
-# Copyright 2017 Eficent Business and IT Consulting Services, S.L.
+# Copyright 2017-2020 ForgeFlow, S.L. (https://www.forgeflow.com)
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl.html).
 
 from odoo import _, api, fields, models
@@ -22,8 +22,7 @@ class StockRequest(models.Model):
         ):
             raise ValidationError(
                 _(
-                    "You cannot link a analytic account "
-                    "to a stock request that belongs to "
-                    "another company."
+                    "You cannot link a analytic account to a stock request "
+                    "that belongs to another company."
                 )
             )
